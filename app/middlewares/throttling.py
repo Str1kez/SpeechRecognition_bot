@@ -30,6 +30,24 @@ class ThrottlingMiddleware(BaseMiddleware):
             await self.message_throttled(message, t)
             raise CancelHandler()
 
+    async def on_process_callback_query(self, call: types.CallbackQuery, data: dict):
+        handler = current_handler.get()
+        dispatcher = Dispatcher.get_current()
+        if handler:
+            limit = getattr(handler, "throttling_rate_limit", self.rate_limit)
+            key = getattr(handler, "throttling_key", f"{self.prefix}_{handler.__name__}")
+        else:
+            limit = self.rate_limit
+            key = f"{self.prefix}_message"
+        try:
+            await dispatcher.throttle(key, rate=limit)
+        except Throttled as t:
+            if t.exceeded_count == 2:
+                await call.answer(text="Еще не готово, нажми еще раз через 10 секунд", show_alert=True)
+            if t.exceeded_count > 2:
+                await call.answer("10 секунд не прошло!", show_alert=True)
+            raise CancelHandler()
+
     async def message_throttled(self, message: types.Message, throttled: Throttled):
         if throttled.exceeded_count > 2:
             await message.reply("<b>Слишком много запросов!!!</b>")

@@ -1,7 +1,6 @@
+from .throttling import ThrottlingMiddleware
 from app.loader import dp
 
-from .throttling import ThrottlingMiddleware
 
-
-if __name__ == "middlewares":
+if __name__ == "app.middlewares":
     dp.middleware.setup(ThrottlingMiddleware())

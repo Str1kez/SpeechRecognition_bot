@@ -2,11 +2,12 @@ import asyncio
 import os
 from uuid import uuid4
 
-from aiogram.types import Message
 import aioboto3
 import aiohttp
+from aiogram.types import Message
 
 from app.data.config import AWS_KEY_ID, AWS_SECRET_KEY, BUCKET_NAME, RECOGNITION_API_KEY, RECOGNITION_URL, STORAGE_URL
+from app.keyboards.inline import retry_keyboard
 from app.loader import bot
 
 
@@ -24,6 +25,7 @@ async def __get_data(path_to_file: str, message: Message, duration: int) -> str:
             await s3.upload_fileobj(f, BUCKET_NAME, name)
 
     await message.edit_text("Загрузил файл в облако")
+    os.remove(path_to_file)
 
     header = {"Authorization": f"Api-Key {RECOGNITION_API_KEY}"}
     object_url = STORAGE_URL + "/" + BUCKET_NAME + "/" + name
@@ -50,14 +52,14 @@ async def __get_data(path_to_file: str, message: Message, duration: int) -> str:
         ) as recognition_response:
             response_data = await recognition_response.json()
     if response_data.get("done"):
-        s = " ".join(chunk["alternatives"][0]["text"] for chunk in response_data["response"]["chunks"])
+        return " ".join(chunk["alternatives"][0]["text"] for chunk in response_data["response"]["chunks"])
     else:
-        await message.edit_text(f"Распознавние еще не готово\n{operation_id=}")
-    os.remove(path_to_file)
-    return s
+        await message.edit_text(
+            f"Распознавние еще не готово\n{operation_id=}", reply_markup=retry_keyboard(operation_id)
+        )
 
 
-async def __partial_send_message(message: str, chat_id: int):
+async def partial_send_message(message: str, chat_id: int):
     while len(message) > 4090:
         await bot.send_message(chat_id, message[:4090])
         message = message[4090:]
@@ -66,4 +68,5 @@ async def __partial_send_message(message: str, chat_id: int):
 
 async def perform_recognition(path_to_file: str, message: Message, duration: int):
     data = await __get_data(path_to_file, message, duration)
-    await __partial_send_message(data, message.chat.id)
+    if data:
+        await partial_send_message(data, message.chat.id)

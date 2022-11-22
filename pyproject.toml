@@ -44,7 +44,7 @@ exclude = '''
 '''
 
 [tool.isort]
-known_local_folder = "shortener"
+known_local_folder = "app"
 lines_after_imports = 2
 multi_line_output = 3
 line_length = 120
