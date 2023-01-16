@@ -15,7 +15,7 @@ async def error_in_extension(message: Message):
 
 @dp.message_handler(content_types=ContentTypes.AUDIO)
 async def receive_audio(message: Message):
-    if message.from_user.id not in ADMINS:
+    if str(message.from_user.id) not in ADMINS:
         await message.answer("Распознавание недоступно для тебя")
         # ADMINS.add(321259733)
         return
