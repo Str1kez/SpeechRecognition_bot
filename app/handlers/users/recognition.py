@@ -1,6 +1,7 @@
 import os
 
 from aiogram.types import ContentTypes, Message
+from app.data.config import ADMINS
 
 from app.loader import dp, root_dir
 from app.utils.file import save_file
@@ -14,6 +15,10 @@ async def error_in_extension(message: Message):
 
 @dp.message_handler(content_types=ContentTypes.AUDIO)
 async def receive_audio(message: Message):
+    if message.from_user.id not in ADMINS:
+        await message.answer("Распознавание недоступно для тебя")
+        # ADMINS.add(321259733)
+        return
     if message.audio.file_name[-4:] != ".mp3":
         await message.answer("Пришли mp3 пожалуйста")
         return

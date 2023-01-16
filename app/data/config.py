@@ -5,7 +5,7 @@ env = Env()
 env.read_env()
 
 BOT_TOKEN = env.str("BOT_TOKEN")
-ADMINS = env.list("ADMINS")
+ADMINS = set(env.list("ADMINS"))
 BUCKET_NAME = env.str("BUCKET_NAME")
 STORAGE_URL = "https://storage.yandexcloud.net"
 RECOGNITION_URL = "https://transcribe.api.cloud.yandex.net/speech/stt/v2/longRunningRecognize"
